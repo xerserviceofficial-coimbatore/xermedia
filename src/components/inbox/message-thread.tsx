@@ -7,7 +7,6 @@ import { format, isToday, isYesterday } from "date-fns";
 import { createClient } from "@/lib/supabase/client";
 import type { Contact, Conversation, ConversationStatus, Message } from "@/types";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./message-bubble";
 
 const MESSAGE_LIMIT = 500;
@@ -112,7 +111,10 @@ export function MessageThread(props: MessageThreadProps) {
 
   const groups = useMemo(() => groupMessagesByDate(messages), [messages]);
   const receiveOnlyContact = contact as ReceiveOnlyContact | null;
-  const savedName = receiveOnlyContact?.name?.trim() || receiveOnlyContact?.phone || "Unknown contact";
+  const savedName =
+    receiveOnlyContact?.name?.trim() ||
+    receiveOnlyContact?.phone ||
+    "Unknown contact";
   const whatsappName = receiveOnlyContact?.wa_profile_name?.trim();
   const secondaryName =
     whatsappName && whatsappName !== savedName
@@ -132,7 +134,9 @@ export function MessageThread(props: MessageThreadProps) {
 
   if (!conversation || !contact) {
     return (
-      <div className={`flex h-full flex-1 items-center justify-center ${DOODLE_BG_CLASSES}`}>
+      <div
+        className={`flex h-full flex-1 items-center justify-center ${DOODLE_BG_CLASSES}`}
+      >
         <div className="rounded-xl border border-border bg-card/90 px-8 py-6 text-center shadow-sm">
           <p className="text-sm font-medium text-foreground">Select a conversation</p>
           <p className="mt-1 text-xs text-muted-foreground">
@@ -173,7 +177,9 @@ export function MessageThread(props: MessageThreadProps) {
           onClick={handleRefresh}
           aria-label="Refresh messages"
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing || loading ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`h-4 w-4 ${isRefreshing || loading ? "animate-spin" : ""}`}
+          />
         </Button>
 
         {onToggleContactPanel ? (
@@ -194,7 +200,10 @@ export function MessageThread(props: MessageThreadProps) {
         ) : null}
       </div>
 
-      <ScrollArea className={`min-h-0 flex-1 ${DOODLE_BG_CLASSES}`} viewportRef={scrollRef}>
+      <div
+        ref={scrollRef}
+        className={`min-h-0 flex-1 overflow-y-auto ${DOODLE_BG_CLASSES}`}
+      >
         <div className="mx-auto flex max-w-3xl flex-col gap-4 p-4 sm:p-6">
           {groups.map((group) => (
             <div key={group.date} className="space-y-3">
@@ -215,7 +224,7 @@ export function MessageThread(props: MessageThreadProps) {
             </div>
           ) : null}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 }
