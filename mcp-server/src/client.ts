@@ -1,15 +1,10 @@
 // ============================================================
-// wacrm public API client.
-//
-// A thin wrapper over the `/api/v1` REST surface. It attaches the
-// bearer key, unwraps the `{ data }` / `{ error }` envelope, and
-// turns API failures into a typed WacrmApiError the tools can render
-// cleanly. Nothing here knows about MCP — it's just the CRM API.
+// XerMedia public API client used by the optional MCP server.
+// Receive-only: no WhatsApp send or broadcast methods are exposed.
 // ============================================================
 
 import type { Config } from './config.js';
 
-/** A structured error from the wacrm API envelope (`{ error: { code, message } }`). */
 export class WacrmApiError extends Error {
   readonly status: number;
   readonly code: string;
@@ -54,9 +49,7 @@ export class WacrmClient {
       Authorization: `Bearer ${this.apiKey}`,
       Accept: 'application/json',
     };
-    if (options.body !== undefined) {
-      headers['Content-Type'] = 'application/json';
-    }
+    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
 
     let res: Response;
     try {
@@ -69,21 +62,17 @@ export class WacrmClient {
       throw new WacrmApiError(
         0,
         'network_error',
-        `Could not reach wacrm at ${this.baseUrl}: ${(err as Error).message}`,
+        `Could not reach XerMedia at ${this.baseUrl}: ${(err as Error).message}`,
       );
     }
 
-    // 429s carry a Retry-After we surface to the model.
-    let payload: unknown = undefined;
+    let payload: unknown;
     const text = await res.text();
     if (text) {
       try {
         payload = JSON.parse(text);
       } catch {
-        // Non-JSON body (e.g. an upstream proxy error page).
-        if (!res.ok) {
-          throw new WacrmApiError(res.status, 'internal', text.slice(0, 500));
-        }
+        if (!res.ok) throw new WacrmApiError(res.status, 'internal', text.slice(0, 500));
       }
     }
 
@@ -110,19 +99,9 @@ export class WacrmClient {
     return { data: res.data, next_cursor: res.meta?.next_cursor ?? null };
   }
 
-  // --- Identity -----------------------------------------------------
-
   me(): Promise<{ data: unknown }> {
     return this.request('GET', '/me');
   }
-
-  // --- Messages -----------------------------------------------------
-
-  sendMessage(body: unknown): Promise<{ data: unknown }> {
-    return this.request('POST', '/messages', { body });
-  }
-
-  // --- Contacts -----------------------------------------------------
 
   listContacts(query: {
     limit?: number;
@@ -145,8 +124,6 @@ export class WacrmClient {
     return this.request('PATCH', `/contacts/${encodeURIComponent(id)}`, { body });
   }
 
-  // --- Conversations ------------------------------------------------
-
   listConversations(query: {
     limit?: number;
     cursor?: string;
@@ -165,15 +142,5 @@ export class WacrmClient {
     query: { limit?: number; cursor?: string },
   ): Promise<Paginated<unknown>> {
     return this.list(`/conversations/${encodeURIComponent(id)}/messages`, query);
-  }
-
-  // --- Broadcasts ---------------------------------------------------
-
-  sendBroadcast(body: unknown): Promise<{ data: unknown }> {
-    return this.request('POST', '/broadcasts', { body });
-  }
-
-  getBroadcast(id: string): Promise<{ data: unknown }> {
-    return this.request('GET', `/broadcasts/${encodeURIComponent(id)}`);
   }
 }
