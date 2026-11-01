@@ -290,11 +290,18 @@ async function processInboundMessage(args: {
     }
   }
 
+  if (!contactRecord) {
+    console.error('[webhook] contact resolution failed')
+    return
+  }
+
+  const contactId = contactRecord.id
+
   let { data: conversation } = await db
     .from('conversations')
     .select('id,unread_count,first_inbound_at')
     .eq('account_id', accountId)
-    .eq('contact_id', contactRecord.id)
+    .eq('contact_id', contactId)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -305,7 +312,7 @@ async function processInboundMessage(args: {
       .insert({
         account_id: accountId,
         user_id: ownerUserId,
-        contact_id: contactRecord.id,
+        contact_id: contactId,
         status: 'open',
         unread_count: 0,
       })
