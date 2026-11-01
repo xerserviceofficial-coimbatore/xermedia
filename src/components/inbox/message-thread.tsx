@@ -101,6 +101,8 @@ export function MessageThread(props: MessageThreadProps) {
   }, [conversation]);
 
   useEffect(() => {
+    // The async fetch performs the state updates after the awaited Supabase call.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchMessages();
   }, [fetchMessages, resyncToken]);
 
