@@ -1,36 +1,42 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import type { WacrmClient } from '../client.js';
-import { asText, registerTool } from './shared.js';
+import { handle, jsonResult } from './shared.js';
 
 export function registerWriteTools(server: McpServer, client: WacrmClient): void {
-  registerTool(
-    server,
+  server.registerTool(
     'create_contact',
-    'Create a contact in XerMedia. This does not send a WhatsApp message.',
     {
-      name: z.string().min(1),
-      phone: z.string().optional(),
-      email: z.string().email().optional(),
-      company: z.string().optional(),
-      notes: z.string().optional(),
+      title: 'Create contact',
+      description: 'Create a XerMedia contact. This never sends a WhatsApp message.',
+      inputSchema: {
+        name: z.string().min(1),
+        phone: z.string().optional(),
+        email: z.string().email().optional(),
+        company: z.string().optional(),
+        notes: z.string().optional(),
+      },
     },
-    async (args) => asText((await client.createContact(args)).data),
+    handle(async (args) => jsonResult((await client.createContact(args)).data)),
   );
 
-  registerTool(
-    server,
+  server.registerTool(
     'update_contact',
-    'Update an existing XerMedia contact. This does not send a WhatsApp message.',
     {
-      id: z.string().uuid(),
-      name: z.string().min(1).optional(),
-      phone: z.string().optional(),
-      email: z.string().email().optional(),
-      company: z.string().optional(),
-      notes: z.string().optional(),
+      title: 'Update contact',
+      description: 'Update a XerMedia contact. This never sends a WhatsApp message.',
+      inputSchema: {
+        id: z.string(),
+        name: z.string().min(1).optional(),
+        phone: z.string().optional(),
+        email: z.string().email().optional(),
+        company: z.string().optional(),
+        notes: z.string().optional(),
+      },
     },
-    async ({ id, ...patch }) => asText((await client.updateContact(id, patch)).data),
+    handle(async ({ id, ...patch }) =>
+      jsonResult((await client.updateContact(id, patch)).data),
+    ),
   );
 }

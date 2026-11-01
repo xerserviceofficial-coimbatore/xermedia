@@ -5,11 +5,16 @@ import type { Config } from '../config.js';
 import { registerReadTools } from './read.js';
 import { registerWriteTools } from './write.js';
 
-export function registerAllTools(
+export function registerTools(
   server: McpServer,
   client: WacrmClient,
   config: Config,
-): void {
+): string[] {
   registerReadTools(server, client);
-  if (config.enableWrites) registerWriteTools(server, client);
+  const groups = ['read'];
+  if (config.enableWrites) {
+    registerWriteTools(server, client);
+    groups.push('contacts-write');
+  }
+  return groups;
 }
